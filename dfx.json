@@ -1,0 +1,30 @@
+{
+  "canisters": {
+    "ePay_backend": {
+      "candid": "src/ePay_backend/ePay_backend.did",
+      "package": "ePay_backend",
+      "type": "rust"
+    },
+    "ePay_frontend": {
+      "dependencies": [
+        "ePay_backend"
+      ],
+      "frontend": {
+        "entrypoint": "src/ePay_frontend/src/index.html"
+      },
+      "source": [
+        "src/ePay_frontend/assets",
+        "dist/ePay_frontend/"
+      ],
+      "type": "assets"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
