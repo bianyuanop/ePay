@@ -1,4 +1,4 @@
-#[ic_cdk::query]
-fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
-}
+pub mod tokens;
+pub mod payment;
+pub mod management;
+pub mod config;
