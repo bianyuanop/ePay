@@ -2,6 +2,8 @@ use candid::{CandidType, Deserialize, Principal, Nat};
 use ic_ledger_types::{Timestamp, Subaccount};
 use ic_cdk;
 
+use crate::types::Account;
+
 pub struct ICRC1 {
     principal: Principal
 }
@@ -17,12 +19,6 @@ pub enum TxError {
     Duplicate { duplicate_of : Nat },
     TemporarilyUnavailable,
     GenericError { error_code : Nat, message : String },
-}
-
-#[derive(CandidType, Deserialize)]
-pub struct Account {
-    owner: Principal,
-    subaccount: Subaccount
 }
 
 #[derive(CandidType, Deserialize)]
@@ -55,6 +51,18 @@ impl ICRC1 {
 
         call_result.unwrap().0
     }
+    
+    pub async fn balance_of(&self, account: Account) -> Nat {
+        let call_result: Result<(Nat,), _> = 
+            ic_cdk::api::call::call(self.principal, "icrc1_balance_of", (account,)).await;
 
-    // pub async fn allowance(&self, )
+        call_result.unwrap().0
+    }
+
+    pub async fn decimals(&self) -> u8 {
+        let call_result: Result<(u8,), _> = 
+            ic_cdk::api::call::call(self.principal, "icrc1_decimals", ()).await;
+
+        call_result.unwrap().0
+    }
 }

@@ -8,10 +8,10 @@ pub enum TokenType {
 }
 
 #[derive(CandidType, Deserialize)]
-pub struct Token {
-    symbol: String,
+pub struct TokenInfo {
     name: String,
-    decimal: u32,
+    symbol: String,
+    decimal: u8,
     principal: Principal,
-    token_type: TokenType
+    token_type: TokenType,
 }

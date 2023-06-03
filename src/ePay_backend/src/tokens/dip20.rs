@@ -1,5 +1,4 @@
-// The implementation is directly copied from https://github.com/dfinity/examples/blob/38c254513c816055d8b653b586804ccb6c6dfcb7/rust/defi/src/defi_dapp/dip20.rs
-// Future implementation may be different depending on the demands
+// The implementation is copied and altered from https://github.com/dfinity/examples/blob/38c254513c816055d8b653b586804ccb6c6dfcb7/rust/defi/src/defi_dapp/dip20.rs
 use candid::{CandidType, Deserialize, Nat, Principal};
 
 pub struct DIP20 {
@@ -35,6 +34,13 @@ pub struct Metadata {
 impl DIP20 {
     pub fn new(principal: Principal) -> Self {
         DIP20 { principal }
+    }
+
+    pub async fn balance_of(&self, account: Principal) -> Nat {
+        let call_result: Result<(Nat,), _> = 
+            ic_cdk::api::call::call(self.principal, "balanceOf", (account,)).await;
+
+        call_result.unwrap().0
     }
 
     pub async fn transfer(&self, target: Principal, amount: Nat) -> TxReceipt {
