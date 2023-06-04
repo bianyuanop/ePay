@@ -5,8 +5,17 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[lib]
-crate-type = ["cdylib"]
+[[bin]]
+name = "user"
+path = "src/canisters/user.rs"
+
+[[bin]]
+name = "merchant"
+path = "src/canisters/merchant.rs"
+
+[[bin]]
+name = "manager"
+path = "src/canisters/manager.rs"
 
 [dependencies]
 candid = "0.8"

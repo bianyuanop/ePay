@@ -1,28 +1,59 @@
+use std::{collections::BTreeMap, vec};
+
 use candid::{Deserialize, CandidType, Nat, Principal};
 
-use crate::payment::order::OrderIndex;
+use crate::{payment::order::OrderIndex, tokens::dip20::Metadata};
 
 use super::balance::Balance;
 
-
-#[derive(CandidType, Deserialize)]
-pub enum UserType {
-    Merchant, 
-    Normal
-}
-
-#[derive(CandidType, Deserialize)]
-pub struct UserMetaData {
-    user_type: UserType,
-}
-
 #[derive(CandidType, Deserialize)]
 pub struct User {
-    username: String,
+    id: Nat,
+    username: Option<String>,
     principal: Principal,
-    metadata: UserMetaData,
     blocked: bool,
     balance: Balance,
 
     orders: Vec<OrderIndex>,
+}
+
+impl From<Principal> for User {
+    fn from(principal: Principal) -> Self {
+        Self {
+            id: Nat::default(),
+            username: None,
+            principal,
+            blocked: false,
+            balance: Balance::default(),
+            orders: vec![]
+        }
+    }
+}
+
+
+#[derive(CandidType, Deserialize, Default)]
+pub struct UserDB {
+    p: u64,
+    users: BTreeMap<u64, User>,
+}
+
+impl UserDB {
+    pub fn new() -> Self {
+        Self { p: 0, users: BTreeMap::default() }
+    }
+    
+    pub fn add_user(&mut self, user: User) {
+        self.users.insert(self.p, user);
+        self.p = self.p + 1;
+    }
+
+    pub fn block_user(&mut self, id: u64) -> bool {
+        if self.users.contains_key(&id) {
+            let mut user = self.users.get_mut(&id).unwrap();
+            user.blocked = true;
+            true
+        } else {
+            false
+        }
+    }
 }

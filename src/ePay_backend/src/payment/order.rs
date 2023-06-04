@@ -21,8 +21,6 @@ pub struct OrderIndex(u64);
 #[derive(CandidType, Deserialize)]
 pub struct Order {
     id: OrderIndex,
-    // key: u64,
-    // page: usize,
     status: OrderStatus,
     timestamp: i64,
     token_info: TokenInfo,
@@ -35,4 +33,8 @@ pub struct Order {
 
     // used for controversial orders that may need admins to judge
     comments: Option<Vec<Comment>>
+}
+
+pub struct OrderBrief {
+    id: OrderIndex,
 }

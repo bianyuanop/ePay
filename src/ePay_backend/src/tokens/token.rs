@@ -9,9 +9,7 @@ pub enum TokenType {
 
 #[derive(CandidType, Deserialize)]
 pub struct TokenInfo {
-    name: String,
-    symbol: String,
-    decimal: u8,
+    // where the contract that manage the token
     principal: Principal,
     token_type: TokenType,
 }

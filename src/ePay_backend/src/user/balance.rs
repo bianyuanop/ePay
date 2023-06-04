@@ -10,7 +10,7 @@ pub struct TokenBalance {
     balance_on_hold: Nat,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct Balance {
     // token name -> balance
     token_balances: HashMap<String, TokenBalance>,    
