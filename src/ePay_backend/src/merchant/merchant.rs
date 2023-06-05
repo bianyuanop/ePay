@@ -6,11 +6,11 @@ use crate::{types::Account, user::balance::Balance, payment::order::Order};
 
 #[derive(CandidType, Deserialize)]
 pub struct Merchant {
-    owner: Principal,
-    deposit_account: Account,
+    pub owner: Principal,
+    pub deposit_account: Account,
     balance: Balance,
 
-    order_ptr: u64,
+    pub order_ptr: u64,
     orders: BTreeMap<u64, Order>,
 
     // depending on the implementation on the frontend 
@@ -31,9 +31,11 @@ impl Merchant {
         }
     }
 
-    pub fn create_order(&mut self, order: Order) -> bool {
+    pub fn add_order(&mut self, order: Order) -> u64 {
         self.orders.insert(self.order_ptr, order);
-        true
+        self.order_ptr += 1;
+
+        self.order_ptr-1
     }
 
     pub fn get_order_mut(&mut self, order_id: u64) -> Option<&mut Order> {
@@ -48,7 +50,7 @@ impl Merchant {
 // used in manage canister 
 #[derive(CandidType, Deserialize, Default)]
 pub struct MerchantDB {
-    merchant_ptr: u64,
+    pub merchant_ptr: u64,
     merchants: BTreeMap<u64, Principal>,
 }
 

@@ -1,7 +1,7 @@
 use candid::{CandidType, Deserialize, Principal, types::principal};
 use ic_ledger_types::{Subaccount};
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone)]
 pub struct Account {
     pub owner: Principal,
     pub subaccount: Subaccount
