@@ -1,0 +1,34 @@
+type Account = record { owner : principal; subaccount : opt vec nat8 };
+type Comment = record {
+  payload_spec : text;
+  issuer : principal;
+  payload : vec nat8;
+};
+type Order = record {
+  id : nat64;
+  tokens_needed : vec record { TokenInfo; nat };
+  payload_spec : opt text;
+  status : OrderStatus;
+  receiving_account : Account;
+  timestamp : nat64;
+  comments : vec Comment;
+  payload : opt vec nat8;
+};
+type OrderStatus = variant { Refunded; Open; Closed; Controversial; Unpaid };
+type Result = variant { Ok : bool; Err : text };
+type Result_1 = variant { Ok : nat64; Err : text };
+type Result_2 = variant { Ok : Order; Err : text };
+type TokenInfo = record { "principal" : principal; token_type : TokenType };
+type TokenType = variant { ICRC1; DIP20; OTHER };
+service : (principal) -> {
+  comment_order : (nat64, vec nat8, text) -> (Result);
+  order_paid : (nat64) -> (Result);
+  publish_order : (
+      vec principal,
+      vec text,
+      vec nat,
+      opt vec nat8,
+      opt text,
+    ) -> (Result_1);
+  view_order : (nat64) -> (Result_2) query;
+}

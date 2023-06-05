@@ -11,8 +11,8 @@ pub enum TokenType {
 #[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TokenInfo {
     // where the contract that manage the token
-    principal: Principal,
-    token_type: TokenType,
+    pub principal: Principal,
+    pub token_type: TokenType,
 }
 
 impl TokenInfo {

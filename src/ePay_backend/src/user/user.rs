@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, vec};
 
 use candid::{Deserialize, CandidType, Nat, Principal};
 
-use crate::{tokens::dip20::Metadata};
+use crate::{tokens::dip20::Metadata, merchant::order::OrderBrief};
 
 use super::balance::Balance;
 
@@ -14,7 +14,7 @@ pub struct User {
     blocked: bool,
     balance: Balance,
 
-    orders: Vec<u64>,
+    orders: Vec<OrderBrief>,
 }
 
 impl From<Principal> for User {

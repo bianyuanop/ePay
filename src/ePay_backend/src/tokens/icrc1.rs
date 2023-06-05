@@ -23,12 +23,12 @@ pub enum TxError {
 
 #[derive(CandidType, Deserialize)]
 pub struct TransferArgs {
-    from_subaccount: Subaccount,
-    to: Account,
-    amount: Nat,
-    fee: Option<Nat>,
-    memo: Option<Vec<u8>>,
-    created_at_time: Option<u64>
+    pub from_subaccount: Subaccount,
+    pub to: Account,
+    pub amount: Nat,
+    pub fee: Option<Nat>,
+    pub memo: Option<Vec<u8>>,
+    pub created_at_time: Option<u64>
 }
 
 #[derive(CandidType, Deserialize)]
@@ -38,6 +38,10 @@ pub enum TransferResult {
 }
 
 impl ICRC1 {
+    pub fn new(principal: Principal) -> Self {
+        Self { principal }
+    }
+
     pub async fn name(&self) -> String {
         let call_result: Result<(String, ), _> = 
             ic_cdk::api::call::call(self.principal, "icrc1_name", ()).await;
@@ -45,14 +49,14 @@ impl ICRC1 {
         call_result.unwrap().0
     }
     
-    pub async fn transfer(&self, transfer_args: TransferArgs) -> TransferResult {
+    pub async fn transfer(&self, transfer_args: &TransferArgs) -> TransferResult {
         let call_result: Result<(TransferResult,), _> = 
             ic_cdk::api::call::call(self.principal, "icrc1_transfer", (transfer_args,)).await;
 
         call_result.unwrap().0
     }
     
-    pub async fn balance_of(&self, account: Account) -> Nat {
+    pub async fn balance_of(&self, account: &Account) -> Nat {
         let call_result: Result<(Nat,), _> = 
             ic_cdk::api::call::call(self.principal, "icrc1_balance_of", (account,)).await;
 

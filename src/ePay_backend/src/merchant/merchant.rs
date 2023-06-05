@@ -1,8 +1,10 @@
 use std::collections::BTreeMap;
 
 use candid::{Principal, CandidType, Deserialize};
+use ic_ledger_types::Transaction;
 
-use crate::{types::Account, user::balance::Balance, payment::order::Order};
+use crate::{types::Account, user::balance::Balance};
+use super::order::Order;
 
 #[derive(CandidType, Deserialize)]
 pub struct Merchant {

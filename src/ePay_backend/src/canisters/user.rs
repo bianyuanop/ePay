@@ -34,7 +34,6 @@ fn main() {
 }
 
 // helper functions below
-
 fn is_authorized() -> Result<(), String> {
     let user = ic_cdk::api::caller();
     STATE_INFO.with(|info| {
