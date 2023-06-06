@@ -25,7 +25,7 @@ fn init(owner: Principal) {
     });
 }
 
-#[update(guard = "is_owner")]
+#[update(guard = "is_merchant")]
 #[candid_method(update)]
 fn publish_order(token_list: Vec<Principal>, token_standards: Vec<String>, token_amount: Vec<Nat>, payload: Option<Vec<u8>>, payload_spec: Option<String>) -> Result<u64, String>{
     let n = token_list.len();
@@ -118,6 +118,15 @@ fn comment_order(order_id: u64, payload: Vec<u8>, payload_spec: String) -> Resul
     })
 }
 
+#[query]
+#[candid_method(query)]
+fn owner() -> Principal {
+    MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+        merchant.owner
+    })
+}
+
 // this functionality seems can't be implemented with ICRC-1 standards since it has no transaction log
 // can implement with future ICRC standards
 #[allow(unused)]
@@ -125,13 +134,14 @@ async fn refund_order(order_id: u64) -> Result<bool, String> {
     unimplemented!()
 }
 
+
 fn main() {
     candid::export_service!();
     std::println!("{}", __export_service());
 }
 
 // helper functions below
-fn is_authorized() -> Result<(), String> {
+fn is_manager() -> Result<(), String> {
     let user = ic_cdk::api::caller();
     STATE_INFO.with(|info| {
         let info = info.borrow();
@@ -143,7 +153,7 @@ fn is_authorized() -> Result<(), String> {
     })
 }
 
-fn is_owner() -> Result<(), String> {
+fn is_merchant() -> Result<(), String> {
     let user = ic_cdk::api::caller();
     MERCHNANT.with(|merchant| {
         let merchant = merchant.borrow();
