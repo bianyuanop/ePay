@@ -1,0 +1,3 @@
+[submodule "tokens/DIP20"]
+	path = tokens/DIP20
+	url = https://github.com/Psychedelic/DIP20

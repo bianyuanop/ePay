@@ -1,9 +1,9 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::{cell::RefCell, collections::HashMap, borrow::BorrowMut};
 
 use ic_cdk::caller;
 use ic_cdk_macros::{init, query, update};
 use candid::{Principal, Nat, candid_method};
-use ePay_backend::{merchant::merchant::{Merchant}, management::state::StateInfo, merchant::{order::Order, self}, tokens::{TokenInfo, TokenType}};
+use ePay_backend::{merchant::merchant::{Merchant}, management::state::StateInfo, merchant::{order::{Order, self}, self}, tokens::{TokenInfo, TokenType}, types::Account};
 
 thread_local! {
     static STATE_INFO: RefCell<StateInfo> = RefCell::new(StateInfo::default());
@@ -27,7 +27,7 @@ fn init(owner: Principal) {
 
 #[update(guard = "is_merchant")]
 #[candid_method(update)]
-fn publish_order(token_list: Vec<Principal>, token_standards: Vec<String>, token_amount: Vec<Nat>, payload: Option<Vec<u8>>, payload_spec: Option<String>) -> Result<u64, String>{
+fn publish_order(token_list: Vec<Principal>, token_standards: Vec<String>, token_amount: Vec<Nat>, payload: Option<Vec<u8>>, payload_spec: Option<String>, payer: Account) -> Result<u64, String>{
     let n = token_list.len();
     if token_standards.len() < n || token_amount.len() < n {
         return Err("token standards or token amount array incorrect length".into());
@@ -53,7 +53,7 @@ fn publish_order(token_list: Vec<Principal>, token_standards: Vec<String>, token
 
     MERCHNANT.with(|merchant| {
         let mut merchant = merchant.borrow_mut();
-        let order = Order::generate_order(merchant.order_ptr, ic_cdk::api::time(), tokens_needed, payload, payload_spec, ic_cdk::api::id());
+        let order = Order::generate_order(merchant.order_ptr, ic_cdk::api::time(), tokens_needed, payload, payload_spec, ic_cdk::api::id(), payer);
 
         let res_id = merchant.add_order(order);
         Ok(res_id)
@@ -75,31 +75,52 @@ fn view_order(order_id: u64) -> Result<Order, String> {
 
 #[update]
 #[candid_method(update)]
-async fn order_paid(order_id: u64) -> Result<bool, String> {
+async fn pay_order(order_id: u64) -> Result<bool, String> {
+    let caller = ic_cdk::caller();
     let order = MERCHNANT.with(|merchant| {
-        let merchant = merchant.borrow();
+        let merchant = merchant.borrow_mut();
         match merchant.get_order(order_id) {
             Some(o) => Some((*o).clone()),
             None => None
-        }
+        } 
     });
 
     match order {
         Some(o) => {
-            if o.is_paid().await {
-                // mark order as Closed
-                MERCHNANT.with(|merchant| {
-                    let mut merchant = merchant.borrow_mut();
-                    let order = merchant.get_order_mut(order_id).unwrap();
-                    order.mark_as_paid();
-                });
+            if o.paid {
                 Ok(true)
             } else {
-                Ok(false)
+                match o.pay().await {
+                     Ok(paid) => {
+                        if paid {
+                            MERCHNANT.with(|merhcant| {
+                                let mut merchant = merhcant.borrow_mut();
+                                match merchant.get_order_mut(order_id) {
+                                    Some(o) => o.mark_as_paid(), 
+                                    None => {}
+                                };
+                            });
+                        }
+                        Ok(paid)
+                    },
+                    Err(e) => Err(e)
+                }
             }
-        },
+        }, 
         None => Err(format!("no such order: {}", order_id).into())
     }
+}
+
+#[query]
+#[candid_method(query)]
+async fn order_paid(order_id: u64) -> Result<bool, String> {
+    MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+        match merchant.get_order(order_id) {
+            Some(o) => Ok(o.paid),
+            None => Err(format!("no such order: {}", order_id).into())
+        }
+    })
 }
 
 #[update]
