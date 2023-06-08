@@ -1,6 +1,5 @@
 use std::cell::RefCell;
-use ePay_backend::{merchant::merchant::MerchantDB};
-use ePay_backend::{management::state::StateInfo};
+use ePay_backend::{management::state::{StateInfo, MerchantDB}};
 
 use ic_cdk_macros::{init, query, update};
 use candid::{candid_method, Principal};
@@ -38,6 +37,11 @@ fn remove_manager(manager: Principal) -> Result<bool, String> {
         Ok(state.remove_manager(manager))
     })
 }
+
+fn create_merchant(owner: Principal) -> Result<bool, String> {
+    Ok(true)    
+}
+
 
 fn main() {
     candid::export_service!();

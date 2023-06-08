@@ -1,18 +1,18 @@
-use std::{cell::RefCell, collections::HashMap, borrow::BorrowMut};
+use std::{cell::RefCell, collections::HashMap, borrow::BorrowMut, time::Duration};
 
 use ic_cdk::caller;
 use ic_cdk_macros::{init, query, update};
 use candid::{Principal, Nat, candid_method};
-use ePay_backend::{merchant::merchant::{Merchant}, management::state::StateInfo, merchant::{order::{Order, self}, self}, tokens::{TokenInfo, TokenType}, types::Account};
+use ePay_backend::{merchant::merchant::{Merchant}, management::state::{StateInfo, MerchantConfig}, merchant::{order::{Order, self}, self}, tokens::{TokenInfo, TokenType}, types::Account};
 
 thread_local! {
     static STATE_INFO: RefCell<StateInfo> = RefCell::new(StateInfo::default());
-    static MERCHNANT: RefCell<Merchant> = RefCell::new(Merchant::new());
+    static MERCHNANT: RefCell<Merchant> = RefCell::new(Merchant::default());
 }
 
-#[init]
-#[candid_method(init)]
-fn init(owner: Principal) {
+// #[init]
+// #[candid_method(init)]
+fn init(owner: Principal, conf: MerchantConfig) {
     let caller = ic_cdk::api::caller();
     STATE_INFO.with(|info| {
         let mut info = info.borrow_mut();
@@ -22,6 +22,14 @@ fn init(owner: Principal) {
     MERCHNANT.with(|merchant| {
         let mut merchant = merchant.borrow_mut();
         merchant.owner = owner;
+        merchant.conf = conf.clone();
+    });
+
+    ic_cdk_timers::set_timer_interval(Duration::from_secs(conf.order_check_duration.clone()), || {
+        MERCHNANT.with(|merchant| {
+            let mut merchant = merchant.borrow_mut();
+            merchant.check_orders_and_update();
+        })
     });
 }
 

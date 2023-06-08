@@ -5,6 +5,7 @@ pub struct Comment {
     issuer: Principal,
     payload_spec: String,
     payload: Vec<u8>,
+    timestamp: u64,
 }
 
 impl Comment {
@@ -12,7 +13,8 @@ impl Comment {
         Self {
             issuer,
             payload,
-            payload_spec
+            payload_spec,
+            timestamp: ic_cdk::api::time(),
         }
     }
 }

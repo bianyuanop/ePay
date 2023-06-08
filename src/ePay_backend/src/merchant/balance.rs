@@ -6,8 +6,7 @@ use crate::tokens::TokenInfo;
 #[derive(CandidType, Deserialize)]
 pub struct TokenBalance {
     token_info: TokenInfo,
-    balance_free: Nat,
-    balance_on_hold: Nat,
+    balance: Nat
 }
 
 #[derive(CandidType, Deserialize, Default)]

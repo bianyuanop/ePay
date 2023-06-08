@@ -2,7 +2,7 @@ use std::{collections::HashMap, hash::Hash, vec, fmt::format};
 
 use candid::{CandidType, Deserialize, Nat, Principal, parser::token};
 
-use crate::{tokens::{TokenInfo, TokenType, icrc1::{ICRC1, TransferArgs}, dip20::DIP20}, types::Account, merchant::transaction::Transaction, utils::order_id_to_subaccount};
+use crate::{tokens::{TokenInfo, TokenType, icrc1::{ICRC1, TransferArgs}, dip20::DIP20}, types::Account, utils::order_id_to_subaccount};
 
 use super::{comment::Comment, merchant};
 
@@ -86,6 +86,14 @@ impl Order {
             }
         }
         Ok(true)
+    }
+
+    pub fn close(&mut self) {
+        self.status = OrderStatus::Closed;
+    }
+
+    pub fn is_controversial(&self) -> bool {
+        self.status == OrderStatus::Controversial
     }
 }
 
