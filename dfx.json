@@ -18,24 +18,15 @@
           "ic-wasm target/wasm32-unknown-unknown/release/dip20.wasm -o target/wasm32-unknown-unknown/release/dip20_opt.wasm shrink"
         ] 
       },
-    "ePay_backend": {
-      "candid": "src/ePay_backend/ePay_backend.did",
-      "package": "ePay_backend",
-      "type": "rust"
-    },
-    "ePay_frontend": {
-      "dependencies": [
-        "ePay_backend"
-      ],
-      "frontend": {
-        "entrypoint": "src/ePay_frontend/src/index.html"
-      },
-      "source": [
-        "src/ePay_frontend/assets",
-        "dist/ePay_frontend/"
-      ],
-      "type": "assets"
-    }
+    "manager": {
+      "candid": "src/ePay_backend/src/canisters/manager.did",
+        "type": "custom",
+        "wasm": "target/wasm32-unknown-unknown/release/manager_opt.wasm",
+        "build": [
+          "cargo build --target wasm32-unknown-unknown --bin manager --release",
+          "ic-wasm target/wasm32-unknown-unknown/release/manager.wasm -o target/wasm32-unknown-unknown/release/manager_opt.wasm shrink"
+        ] 
+      }
   },
   "defaults": {
     "build": {

@@ -10,8 +10,8 @@ thread_local! {
     static MERCHNANT: RefCell<Merchant> = RefCell::new(Merchant::default());
 }
 
-// #[init]
-// #[candid_method(init)]
+#[init]
+#[candid_method(init)]
 fn init(owner: Principal, conf: MerchantConfig) {
     let caller = ic_cdk::api::caller();
     STATE_INFO.with(|info| {
@@ -84,7 +84,6 @@ fn view_order(order_id: u64) -> Result<Order, String> {
 #[update]
 #[candid_method(update)]
 async fn pay_order(order_id: u64) -> Result<bool, String> {
-    let caller = ic_cdk::caller();
     let order = MERCHNANT.with(|merchant| {
         let merchant = merchant.borrow_mut();
         match merchant.get_order(order_id) {
@@ -158,9 +157,41 @@ fn owner() -> Principal {
 
 // this functionality seems can't be implemented with ICRC-1 standards since it has no transaction log
 // can implement with future ICRC standards
-#[allow(unused)]
+#[update]
+#[candid_method(update)]
 async fn refund_order(order_id: u64) -> Result<bool, String> {
-    unimplemented!()
+    let order = MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow_mut();
+        match merchant.get_order(order_id) {
+            Some(o) => Some((*o).clone()),
+            None => None
+        } 
+    });
+
+    match order {
+        Some(o) => {
+            if o.paid {
+                Err(format!("order unpaid: {}", o.id).into())
+            } else {
+                match o.refund().await {
+                     Ok(paid) => {
+                        if paid {
+                            MERCHNANT.with(|merhcant| {
+                                let mut merchant = merhcant.borrow_mut();
+                                match merchant.get_order_mut(order_id) {
+                                    Some(o) => o.mark_as_refunded(), 
+                                    None => {}
+                                };
+                            });
+                        }
+                        Ok(paid)
+                    },
+                    Err(e) => Err(e)
+                }
+            }
+        }, 
+        None => Err(format!("no such order: {}", order_id).into())
+    }
 }
 
 
@@ -192,4 +223,25 @@ fn is_merchant() -> Result<(), String> {
             Ok(())
         }
     })
+}
+
+fn is_authorized() -> Result<(), String> {
+    let user = ic_cdk::api::caller();
+    let mut authorized = true;
+    STATE_INFO.with(|info| {
+        let info = info.borrow();
+        authorized &= info.is_manager(user);
+    });
+
+    MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+        authorized &= merchant.owner == user;
+    });
+
+    if authorized {
+        Ok(())
+    } else {
+        Err("not merchant or manager".into())
+    }
+
 }

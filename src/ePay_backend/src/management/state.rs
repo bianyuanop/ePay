@@ -11,6 +11,7 @@ pub struct MerchantConfig {
     pub order_check_duration: u64,
     pub order_on_hold_duration: u64,
     pub fee_rate: f32,
+    pub fee_to: Principal,
 }
 
 impl Default for MerchantConfig {
@@ -21,6 +22,7 @@ impl Default for MerchantConfig {
             // hold 7 days before merchant can redeem the assets paid by buyers
             order_on_hold_duration: 60*60*24*7,
             fee_rate: 0.001,
+            fee_to: Principal::anonymous(),
         }
     }
 }
@@ -84,11 +86,14 @@ pub struct MerchantDB {
 }
 
 impl MerchantDB {
-    pub fn add_merchant(&mut self, merchant: Principal) {
+    pub fn add_merchant(&mut self, merchant: Principal) -> u64 {
         self.merchants.insert(self.merchant_ptr, merchant);
+        self.merchant_ptr += 1;
+
+        self.merchant_ptr-1
     }
 
-    pub fn get_merchant_principal(&mut self, id: u64) -> Option<Principal> {
+    pub fn get_merchant_principal(&self, id: u64) -> Option<Principal> {
         match self.merchants.get(&id) {
             Some(m) => {
                 Some((*m).clone())

@@ -1,7 +1,8 @@
 use std::collections::{BTreeMap, HashSet};
+use std::ops::{Mul, Sub, Div};
 use std::time::{self, Duration};
 
-use candid::{Principal, CandidType, Deserialize};
+use candid::{Principal, CandidType, Deserialize, Nat};
 use ic_cdk_timers::TimerId;
 
 use crate::management::state::MerchantConfig;
@@ -15,13 +16,14 @@ pub struct Merchant {
     pub owner: Principal,
     deposit_account: Account,
     balance: Balance,
+    fee: Balance,
 
     pub order_ptr: u64,
     orders: BTreeMap<u64, Order>,
 
     // depending on the implementation on the frontend 
-    info_spec: Option<String>,
-    info: Option<Vec<u8>>,
+    pub info_spec: Option<String>,
+    pub info: Option<Vec<u8>>,
 
     orders_on_hold: Vec<u64>,
     pub blocked: bool,
@@ -36,6 +38,7 @@ impl Default for Merchant {
             owner: Principal::anonymous(),
             deposit_account: Account::from(Principal::anonymous()),
             balance: Balance::default(), 
+            fee: Balance::default(),
             order_ptr: 0, 
             orders: BTreeMap::new(),
             info_spec: None,
@@ -54,6 +57,7 @@ impl Merchant {
             owner: Principal::anonymous(),
             deposit_account: Account::from(Principal::anonymous()),
             balance: Balance::default(), 
+            fee: Balance::default(),
             order_ptr: 0, 
             orders: BTreeMap::new(),
             info_spec: None,
@@ -84,6 +88,11 @@ impl Merchant {
         self.orders.get(&order_id)
     }
 
+    pub fn calculate_fee(fee_rate: f32, amount: &Nat) -> (Nat, Nat) {
+        // TODO: safe math here
+        ((*amount).clone(), Nat::from(0))
+    }
+
     pub fn check_orders_and_update(&mut self) {
         let mut left: Vec<u64> = vec![];
         let now = ic_cdk::api::time();
@@ -94,6 +103,12 @@ impl Merchant {
             let time_elapsed = Duration::from_nanos(now - order_created_at);
 
             if time_elapsed >= Duration::from_secs(self.conf.order_on_hold_duration) && !order.is_controversial() {
+                // fee application
+                for (token_info, amount) in order.tokens_needed.iter() {
+                    let (to_merchant, to_network) = Merchant::calculate_fee(self.conf.fee_rate, amount);
+                    self.balance.add(token_info, &to_merchant);
+                    self.fee.add(token_info, &to_network);
+                }
                 order.close();
             } else {
                 left.push(*order_id);

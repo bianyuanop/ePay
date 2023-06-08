@@ -66,6 +66,10 @@ impl Order {
         self.paid = true;
     }
 
+    pub fn mark_as_refunded(&mut self) {
+        self.status = OrderStatus::Refunded;
+    }
+
     pub fn insert_comment(&mut self, issuer: Principal, payload: Vec<u8>, payload_spec: String) {
         if self.status != OrderStatus::Controversial { self.status = OrderStatus::Controversial }
         self.comments.push(Comment::new(issuer, payload, payload_spec));
@@ -88,6 +92,23 @@ impl Order {
         Ok(true)
     }
 
+    pub async fn refund(&self) -> Result<bool, String> {
+        for (token_info, amount) in self.tokens_needed.iter() {
+            match token_info.token_type {
+                TokenType::DIP20 => {
+                    let token = DIP20::new(token_info.principal);
+                    let receipt = token.transfer_from(self.receiving_account.owner, self.payer.owner, (*amount).clone()).await;
+                    match receipt {
+                        Ok(_) =>  (),
+                        Err(e) => return Err(format!("{:?}", e).into())
+                    }
+                },
+                _ => return Err(format!("unsupported token").into())
+            }
+        }
+        Ok(true)
+    }
+
     pub fn close(&mut self) {
         self.status = OrderStatus::Closed;
     }
@@ -98,9 +119,3 @@ impl Order {
 }
 
 
-
-#[derive(CandidType, Deserialize)]
-pub struct OrderBrief {
-    id: u64,
-    merchant_canister_principal: Principal,
-}

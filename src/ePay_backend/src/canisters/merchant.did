@@ -2,7 +2,13 @@ type Account = record { owner : principal; subaccount : opt vec nat8 };
 type Comment = record {
   payload_spec : text;
   issuer : principal;
+  timestamp : nat64;
   payload : vec nat8;
+};
+type MerchantConfig = record {
+  fee_rate : float32;
+  order_check_duration : nat64;
+  order_on_hold_duration : nat64;
 };
 type Order = record {
   id : nat64;
@@ -22,7 +28,7 @@ type Result_1 = variant { Ok : nat64; Err : text };
 type Result_2 = variant { Ok : Order; Err : text };
 type TokenInfo = record { "principal" : principal; token_type : TokenType };
 type TokenType = variant { ICRC1; DIP20; OTHER };
-service : (principal) -> {
+service : (principal, MerchantConfig) -> {
   comment_order : (nat64, vec nat8, text) -> (Result);
   order_paid : (nat64) -> (Result) query;
   owner : () -> (principal) query;

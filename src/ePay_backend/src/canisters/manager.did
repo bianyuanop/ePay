@@ -1,0 +1,7 @@
+type Result = variant { Ok : bool; Err : text };
+type Result_1 = variant { Ok : nat64; Err : text };
+service : () -> {
+  add_manager : (principal) -> (Result);
+  create_merchant : (principal) -> (Result_1);
+  remove_manager : (principal) -> (Result);
+}
