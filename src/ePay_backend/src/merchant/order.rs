@@ -40,7 +40,7 @@ pub struct Order {
     pub paid: bool,
 
     // used for controversial orders that may need admins to judge
-    comments: Vec<Comment>,
+    pub comments: Vec<Comment>,
 }
 
 impl Order {
@@ -63,7 +63,7 @@ impl Order {
     }
 
     pub fn mark_as_paid(&mut self) {
-        self.status = OrderStatus::Closed;
+        self.paid = true;
     }
 
     pub fn insert_comment(&mut self, issuer: Principal, payload: Vec<u8>, payload_spec: String) {

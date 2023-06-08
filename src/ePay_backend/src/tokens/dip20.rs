@@ -7,15 +7,15 @@ pub struct DIP20 {
 
 #[derive(CandidType, Debug, PartialEq, Deserialize)]
 pub enum TxError {
-    InsufficientBalance,
     InsufficientAllowance,
+    InsufficientBalance,
+    ErrorOperationStyle,
     Unauthorized,
     LedgerTrap,
-    AmountTooSmall,
-    BlockUsed,
-    ErrorOperationStyle,
     ErrorTo,
-    Other,
+    Other(String),
+    BlockUsed,
+    AmountTooSmall,
 }
 pub type TxReceipt = Result<Nat, TxError>;
 

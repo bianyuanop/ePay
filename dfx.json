@@ -8,7 +8,16 @@
           "cargo build --target wasm32-unknown-unknown --bin merchant --release",
           "ic-wasm target/wasm32-unknown-unknown/release/merchant.wasm -o target/wasm32-unknown-unknown/release/merchant_opt.wasm shrink"
         ] 
-    },
+      },
+    "dip20": {
+      "candid": "src/ePay_backend/src/canisters/dip20.did",
+        "type": "custom",
+        "wasm": "target/wasm32-unknown-unknown/release/dip20_opt.wasm",
+        "build": [
+          "cargo build --target wasm32-unknown-unknown --bin dip20 --release",
+          "ic-wasm target/wasm32-unknown-unknown/release/dip20.wasm -o target/wasm32-unknown-unknown/release/dip20_opt.wasm shrink"
+        ] 
+      },
     "ePay_backend": {
       "candid": "src/ePay_backend/ePay_backend.did",
       "package": "ePay_backend",

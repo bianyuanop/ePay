@@ -17,6 +17,10 @@ path = "src/canisters/merchant.rs"
 name = "manager"
 path = "src/canisters/manager.rs"
 
+[[bin]]
+name = "dip20"
+path = "src/canisters/dip20.rs"
+
 [dependencies]
 candid = "0.8"
 ic-cdk = "0.7"
