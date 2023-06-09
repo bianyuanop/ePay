@@ -1,14 +1,24 @@
 use candid::{CandidType, Deserialize, Principal, types::principal::PrincipalError};
 
 
-#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum TokenType {
     ICRC1,
     DIP20,
     OTHER,
 }
 
-#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Clone, Copy)]
+impl From<String> for TokenType {
+    fn from(value: String) -> Self {
+        match value.to_uppercase().as_str() {
+            "ICRC1" => TokenType::ICRC1,
+            "DIP20" => TokenType::DIP20,
+            _ => TokenType::OTHER, 
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub struct TokenInfo {
     // where the contract that manage the token
     pub principal: Principal,

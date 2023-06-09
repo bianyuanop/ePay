@@ -13,16 +13,19 @@ thread_local! {
 }
 
 
-// #[init]
-// #[candid_method(init)]
+#[init]
+#[candid_method(init)]
 fn init() {
     let caller = ic_cdk::api::caller();
     STATE_INFO.with(|info| {
         let mut info = info.borrow_mut();
         info.add_manager(caller);
+        info.set_owner(caller)
     });
 }
 
+#[update]
+#[candid_method(update)]
 fn register(user: Principal) {
     USERDB.with(|db| {
         let mut db = db.borrow_mut();
@@ -30,6 +33,8 @@ fn register(user: Principal) {
     })
 }
 
+#[update]
+#[candid_method(update)]
 fn add_order(user_id: Principal, order_id: u64, merchant_id: u64) -> Result<bool, String> {
     USERDB.with(|db| {
         let mut db = db.borrow_mut();
@@ -44,6 +49,8 @@ fn add_order(user_id: Principal, order_id: u64, merchant_id: u64) -> Result<bool
     })
 }
 
+#[query]
+#[candid_method(query)]
 fn get_user(user: Principal) -> Option<User> {
     let caller = ic_cdk::caller();
     if user == caller {
@@ -73,11 +80,6 @@ fn get_user(user: Principal) -> Option<User> {
         }
     }
 }
-
-fn request_merchant(user: Principal) -> Result<bool, String> {
-    Ok(true)
-}
-
 
 fn main() {
     candid::export_service!();

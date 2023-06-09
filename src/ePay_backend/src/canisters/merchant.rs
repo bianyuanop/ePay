@@ -36,6 +36,11 @@ fn init(owner: Principal, conf: MerchantConfig) {
 #[update(guard = "is_merchant")]
 #[candid_method(update)]
 fn publish_order(token_list: Vec<Principal>, token_standards: Vec<String>, token_amount: Vec<Nat>, payload: Option<Vec<u8>>, payload_spec: Option<String>, payer: Account) -> Result<u64, String>{
+    let token_allowed = MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+        merchant.conf.token_allowed.clone()
+    });
+
     let n = token_list.len();
     if token_standards.len() < n || token_amount.len() < n {
         return Err("token standards or token amount array incorrect length".into());
@@ -48,12 +53,14 @@ fn publish_order(token_list: Vec<Principal>, token_standards: Vec<String>, token
             "DIP20" => Some(TokenType::DIP20),
             _ => Some(TokenType::OTHER)
         };
-
         if standard == None {
             return Err(format!("unsupported token standard: {}", token_standards[i]).into());
         }
 
         let token_info = TokenInfo::generate_token_info(token_list[i], standard.unwrap());
+        if !token_allowed.contains(&token_info) {
+            return Err(format!("unsupported token used: {:?}", token_info).into());
+        }
 
         tokens_needed.insert(token_info, token_amount[i].clone());
     }
@@ -81,7 +88,7 @@ fn view_order(order_id: u64) -> Result<Order, String> {
     })
 }
 
-#[update]
+#[update(guard = "is_normal")]
 #[candid_method(update)]
 async fn pay_order(order_id: u64) -> Result<bool, String> {
     let order = MERCHNANT.with(|merchant| {
@@ -155,9 +162,7 @@ fn owner() -> Principal {
     })
 }
 
-// this functionality seems can't be implemented with ICRC-1 standards since it has no transaction log
-// can implement with future ICRC standards
-#[update]
+#[update(guard = "is_authorized")]
 #[candid_method(update)]
 async fn refund_order(order_id: u64) -> Result<bool, String> {
     let order = MERCHNANT.with(|merchant| {
@@ -194,6 +199,53 @@ async fn refund_order(order_id: u64) -> Result<bool, String> {
     }
 }
 
+#[update(guard = "is_authorized")]
+#[candid_method(update)]
+fn update_info(paylaod_spec: String, payload: Vec<u8>) {
+    MERCHNANT.with(|merchant| {
+        let mut merchant = merchant.borrow_mut();
+        merchant.info = Some(payload);
+        merchant.info_spec = Some(paylaod_spec)
+    });
+}
+
+#[update(guard = "is_manager")]
+#[candid_method(update)]
+fn set_block(block: bool) -> bool {
+    MERCHNANT.with(|merchant| {
+        let mut merchant = merchant.borrow_mut();
+        merchant.blocked = block;
+    });
+    true
+}
+
+#[update(guard = "is_manager")]
+#[candid_method(update)]
+fn set_verify(verified: bool) -> bool {
+    MERCHNANT.with(|merchant| {
+        let mut merchant = merchant.borrow_mut();
+        merchant.verified = verified;
+    });
+    true
+}
+
+#[update(guard = "is_manager")]
+#[candid_method(update)]
+fn update_config(conf: MerchantConfig) {
+    MERCHNANT.with(|merchant| {
+        let mut merchant = merchant.borrow_mut();
+        merchant.conf = conf;
+    });
+}
+
+#[update(guard = "is_manager")]
+#[candid_method(update)]
+fn get_config() -> MerchantConfig {
+    MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+        merchant.conf.clone()
+    })
+}
 
 fn main() {
     candid::export_service!();
@@ -217,7 +269,7 @@ fn is_merchant() -> Result<(), String> {
     let user = ic_cdk::api::caller();
     MERCHNANT.with(|merchant| {
         let merchant = merchant.borrow();
-        if merchant.owner != caller() {
+        if merchant.owner != user {
             Err("no owner!".into())
         } else {
             Ok(())
@@ -227,15 +279,15 @@ fn is_merchant() -> Result<(), String> {
 
 fn is_authorized() -> Result<(), String> {
     let user = ic_cdk::api::caller();
-    let mut authorized = true;
+    let mut authorized = false;
     STATE_INFO.with(|info| {
         let info = info.borrow();
-        authorized &= info.is_manager(user);
+        authorized |= info.is_manager(user);
     });
 
     MERCHNANT.with(|merchant| {
         let merchant = merchant.borrow();
-        authorized &= merchant.owner == user;
+        authorized |= merchant.owner == user;
     });
 
     if authorized {
@@ -243,5 +295,15 @@ fn is_authorized() -> Result<(), String> {
     } else {
         Err("not merchant or manager".into())
     }
+}
 
+fn is_normal() -> Result<(), String> {
+    MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+        if !merchant.blocked {
+            Ok(())
+        } else {
+            Err("blocked by manager".into())
+        }
+    })
 }

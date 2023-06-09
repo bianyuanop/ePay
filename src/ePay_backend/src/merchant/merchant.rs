@@ -14,22 +14,23 @@ use super::balance::Balance;
 #[derive(CandidType, Deserialize)]
 pub struct Merchant {
     pub owner: Principal,
-    deposit_account: Account,
-    balance: Balance,
-    fee: Balance,
+    pub deposit_account: Account,
+    pub balance: Balance,
+    pub fee: Balance,
 
     pub order_ptr: u64,
-    orders: BTreeMap<u64, Order>,
+    pub orders: BTreeMap<u64, Order>,
 
     // depending on the implementation on the frontend 
     pub info_spec: Option<String>,
     pub info: Option<Vec<u8>>,
 
-    orders_on_hold: Vec<u64>,
+    pub orders_on_hold: Vec<u64>,
     pub blocked: bool,
 
     pub conf: MerchantConfig,
     pub comments: Vec<Comment>,
+    pub verified: bool,
 }
 
 impl Default for Merchant {
@@ -46,7 +47,8 @@ impl Default for Merchant {
             orders_on_hold: vec![],
             blocked: false,
             conf: MerchantConfig::default(),
-            comments: vec![]
+            comments: vec![],
+            verified: false
         }
     }
 }
@@ -65,7 +67,8 @@ impl Merchant {
             orders_on_hold: vec![],
             blocked: false,
             conf,
-            comments: vec![]
+            comments: vec![],
+            verified: false
         }
     }
 

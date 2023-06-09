@@ -9,15 +9,6 @@
           "ic-wasm target/wasm32-unknown-unknown/release/merchant.wasm -o target/wasm32-unknown-unknown/release/merchant_opt.wasm shrink"
         ] 
       },
-    "dip20": {
-      "candid": "src/ePay_backend/src/canisters/dip20.did",
-        "type": "custom",
-        "wasm": "target/wasm32-unknown-unknown/release/dip20_opt.wasm",
-        "build": [
-          "cargo build --target wasm32-unknown-unknown --bin dip20 --release",
-          "ic-wasm target/wasm32-unknown-unknown/release/dip20.wasm -o target/wasm32-unknown-unknown/release/dip20_opt.wasm shrink"
-        ] 
-      },
     "manager": {
       "candid": "src/ePay_backend/src/canisters/manager.did",
         "type": "custom",
@@ -25,6 +16,15 @@
         "build": [
           "cargo build --target wasm32-unknown-unknown --bin manager --release",
           "ic-wasm target/wasm32-unknown-unknown/release/manager.wasm -o target/wasm32-unknown-unknown/release/manager_opt.wasm shrink"
+        ] 
+      },
+    "user": {
+      "candid": "src/ePay_backend/src/canisters/user.did",
+        "type": "custom",
+        "wasm": "target/wasm32-unknown-unknown/release/user_opt.wasm",
+        "build": [
+          "cargo build --target wasm32-unknown-unknown --bin user --release",
+          "ic-wasm target/wasm32-unknown-unknown/release/user.wasm -o target/wasm32-unknown-unknown/release/user_opt.wasm shrink"
         ] 
       }
   },

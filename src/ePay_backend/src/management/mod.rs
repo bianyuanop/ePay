@@ -1,2 +1,3 @@
 pub mod state;
-pub mod merchant;
+pub mod wasm_store; 
+pub mod report;

@@ -1,4 +1,5 @@
 use candid::Principal;
+use ic_cdk::api::management_canister::{main::{CreateCanisterArgument, InstallCodeArgument, create_canister, install_code, CanisterInstallMode}, provisional::CanisterId};
 use ic_ledger_types::{Subaccount, AccountIdentifier};
 
 use crate::types::Account;
@@ -16,6 +17,27 @@ pub fn subaccount_to_order_id(subaccount: Subaccount) -> u64 {
     }
 
     u64::from_le_bytes(arr)
+}
+
+pub async fn create_and_install_canister(create_canister_arg: CreateCanisterArgument, init_arg: Vec<u8>, wasm_module: Vec<u8>) -> Result<CanisterId, String> {
+    let canister_id = create_canister(create_canister_arg).await.ok().unwrap().0.canister_id;
+
+    let install_arg = InstallCodeArgument {
+        mode: CanisterInstallMode::Install,   
+        canister_id,
+        wasm_module,
+        arg: init_arg
+    };
+    let install_res = install_code(install_arg).await;
+
+    match install_res {
+        Ok(_) => {
+            Ok(canister_id)
+        },
+        Err(e) => {
+            Err(format!("{:?}", e).into())
+        }
+    }
 }
 
 mod tests {

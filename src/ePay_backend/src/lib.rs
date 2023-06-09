@@ -7,3 +7,4 @@ pub mod data_structure;
 pub mod consts;
 pub mod user;
 pub mod merchant;
+pub mod interop;

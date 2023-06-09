@@ -6,6 +6,8 @@ type Comment = record {
   payload : vec nat8;
 };
 type MerchantConfig = record {
+  token_allowed : vec TokenInfo;
+  fee_to : principal;
   fee_rate : float32;
   order_check_duration : nat64;
   order_on_hold_duration : nat64;
@@ -30,6 +32,7 @@ type TokenInfo = record { "principal" : principal; token_type : TokenType };
 type TokenType = variant { ICRC1; DIP20; OTHER };
 service : (principal, MerchantConfig) -> {
   comment_order : (nat64, vec nat8, text) -> (Result);
+  get_config : () -> (MerchantConfig);
   order_paid : (nat64) -> (Result) query;
   owner : () -> (principal) query;
   pay_order : (nat64) -> (Result);
@@ -41,5 +44,10 @@ service : (principal, MerchantConfig) -> {
       opt text,
       Account,
     ) -> (Result_1);
+  refund_order : (nat64) -> (Result);
+  set_block : (bool) -> (bool);
+  set_verify : (bool) -> (bool);
+  update_config : (MerchantConfig) -> ();
+  update_info : (text, vec nat8) -> ();
   view_order : (nat64) -> (Result_2) query;
 }

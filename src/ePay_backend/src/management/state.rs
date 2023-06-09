@@ -12,6 +12,7 @@ pub struct MerchantConfig {
     pub order_on_hold_duration: u64,
     pub fee_rate: f32,
     pub fee_to: Principal,
+    pub token_allowed: HashSet<TokenInfo>,
 }
 
 impl Default for MerchantConfig {
@@ -23,6 +24,7 @@ impl Default for MerchantConfig {
             order_on_hold_duration: 60*60*24*7,
             fee_rate: 0.001,
             fee_to: Principal::anonymous(),
+            token_allowed: HashSet::new()
         }
     }
 }
@@ -31,9 +33,9 @@ impl Default for MerchantConfig {
 pub struct StateInfo {
     pub owner: Principal,
     pub managers: HashSet<Principal>,
-    pub token_allowed: HashSet<TokenInfo>,
     pub merchant_conf: MerchantConfig,
     pub fee_to: Principal,
+    pub user_canister: Option<Principal>
 }
 
 impl StateInfo {
@@ -72,9 +74,9 @@ impl Default for StateInfo {
         Self { 
             managers: HashSet::new(),
             owner: Principal::anonymous(), 
-            token_allowed: HashSet::new(), 
             merchant_conf: MerchantConfig::default(),
-            fee_to: Principal::anonymous()
+            fee_to: Principal::anonymous(),
+            user_canister: None
         }
     }
 }
@@ -82,7 +84,7 @@ impl Default for StateInfo {
 #[derive(CandidType, Deserialize, Default)]
 pub struct MerchantDB {
     pub merchant_ptr: u64,
-    merchants: BTreeMap<u64, Principal>,
+    pub merchants: BTreeMap<u64, Principal>,
 }
 
 impl MerchantDB {
