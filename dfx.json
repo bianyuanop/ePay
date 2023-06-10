@@ -1,7 +1,7 @@
 {
   "canisters": {
     "merchant": {
-      "candid": "src/ePay_backend/src/canisters/merchant.did",
+      "candid": "src/canisters/merchant.did",
         "type": "custom",
         "wasm": "target/wasm32-unknown-unknown/release/merchant_opt.wasm",
         "build": [
@@ -10,7 +10,7 @@
         ] 
       },
     "manager": {
-      "candid": "src/ePay_backend/src/canisters/manager.did",
+      "candid": "src/canisters/manager.did",
         "type": "custom",
         "wasm": "target/wasm32-unknown-unknown/release/manager_opt.wasm",
         "build": [
@@ -19,7 +19,7 @@
         ] 
       },
     "user": {
-      "candid": "src/ePay_backend/src/canisters/user.did",
+      "candid": "src/canisters/user.did",
         "type": "custom",
         "wasm": "target/wasm32-unknown-unknown/release/user_opt.wasm",
         "build": [

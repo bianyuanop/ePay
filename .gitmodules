@@ -1,3 +1,6 @@
 [submodule "tokens/DIP20"]
 	path = tokens/DIP20
 	url = https://github.com/Psychedelic/DIP20
+[submodule "src/ePay_frontend"]
+	path = src/ePay_frontend
+	url = https://github.com/bianyuanop/ePay_frontend

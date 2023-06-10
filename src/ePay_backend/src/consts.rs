@@ -1,2 +1,0 @@
-pub const MERCHANT_WASM: &[u8] = include_bytes!("../../../target/wasm32-unknown-unknown/release/merchant_opt.wasm");
-pub const USER_WASM: &[u8] = include_bytes!("../../../target/wasm32-unknown-unknown/release/user_opt.wasm");
