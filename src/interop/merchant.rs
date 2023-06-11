@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use candid::Principal;
 
 use crate::management::state::MerchantConfig;

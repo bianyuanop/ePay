@@ -26,10 +26,15 @@ fn init() {
 
 #[update]
 #[candid_method(update)]
-fn register(user: Principal) {
+fn register(user: Principal) -> Result<(), String> {
     USERDB.with(|db| {
         let mut db = db.borrow_mut();
-        db.generate_user_and_insert(user);
+        if db.has_user(user) {
+            Err("Already registered".into())
+        } else {
+            db.generate_user_and_insert(user);
+            Ok(())
+        }
     })
 }
 
@@ -52,33 +57,38 @@ fn add_order(user_id: Principal, order_id: u64, merchant_id: u64) -> Result<bool
 #[query]
 #[candid_method(query)]
 fn get_user(user: Principal) -> Option<User> {
-    let caller = ic_cdk::caller();
-    if user == caller {
-        USERDB.with(|db| {
-            let db = db.borrow();
-            match db.get_user(&user) {
-                Some(u) => {
-                    Some((*u).clone())
-                },
-                None => None
-            }
-        })
-    } else {
-        match is_authorized() {
-            Ok(_) => {
-                USERDB.with(|db| {
-                    let db = db.borrow();
-                    match db.get_user(&user) {
-                        Some(u) => {
-                            Some((*u).clone())
-                        },
-                        None => None
-                    }
-                })
+    USERDB.with(|db| {
+        let db = db.borrow();
+        match db.get_user(&user) {
+            Some(u) => {
+                Some((*u).clone())
             },
-            Err(_) => None
+            None => None
         }
-    }
+    })
+}
+
+#[query]
+#[candid_method(query)]
+fn has_user(user: Principal) -> bool {
+    USERDB.with(|db| {
+        let db = db.borrow();
+        db.has_user(user)
+    })
+}
+
+#[update(guard = "is_authorized")]
+#[candid_method(update)]
+fn attach_merchant2user(user: Principal, merchant_id: u64) -> Result<(), String> {
+    USERDB.with(|db| {
+        let mut db = db.borrow_mut();
+        if let Some(u) = db.get_user_mut(user) {
+            u.merchants.insert(merchant_id);
+            Ok(())
+        } else {
+            Err(format!("no such user: {}", user).into())
+        }
+    })
 }
 
 fn main() {

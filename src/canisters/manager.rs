@@ -1,5 +1,5 @@
 use std::{cell::RefCell, collections::{HashSet, HashMap, BTreeMap}};
-use ePay_backend::{management::{state::{StateInfo, MerchantDB, MerchantConfig}, wasm_store::WasmStorage, report::MerchantManageReport}, interop::merchant::MerchantOp, utils::create_and_install_canister, tokens::{TokenInfo, TokenType}};
+use ePay_backend::{management::{state::{StateInfo, MerchantDB, MerchantConfig}, wasm_store::WasmStorage, report::MerchantManageReport}, interop::{merchant::MerchantOp, user::UserOp}, utils::create_and_install_canister, tokens::{TokenInfo, TokenType}};
 
 use ic_cdk_macros::{init, query, update};
 use candid::{candid_method, Principal};
@@ -271,6 +271,7 @@ async fn create_merchant(owner: Principal) -> Result<u64, String> {
             })
         };
         // see `merchant.did`
+        // TODO: destroy on failure
         let init_arg = candid::encode_args((owner, merchant_conf)).unwrap();
 
         let install_res = create_and_install_canister(canister_creation_arg, init_arg, wasm_module).await;
@@ -283,13 +284,43 @@ async fn create_merchant(owner: Principal) -> Result<u64, String> {
                     merchant_id = db.add_merchant(canister_id);
                 });
 
-                Ok(merchant_id)
+                let user_op = STATE_INFO.with(|info| {
+                    let info = info.borrow();
+                    if let Some(user_can) = info.user_canister {
+                        let op = UserOp { principal: user_can};
+                        Some(op)
+                    } else {
+                        None
+                    }
+                });
+
+                if let Some(op) = user_op {
+                    match op.attach_merchant2user(owner, merchant_id).await {
+                        Ok(_) => {
+                            Ok(merchant_id)
+                        },
+                        Err(e) => {
+                            Err(e)
+                        }
+                    }
+                } else {
+                    Err("user canister not installed".into())
+                }
             }, 
             Err(e) => Err(e)
         }
     } else {
         Err("merchant wasm not uploaded".into())
     }
+}
+
+#[query]
+#[candid_method(query)]
+fn get_user_canister() -> Option<Principal> {
+    STATE_INFO.with(|info| {
+        let info = info.borrow();
+        info.user_canister
+    })
 }
 
 

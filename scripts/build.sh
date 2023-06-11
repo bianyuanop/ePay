@@ -12,3 +12,5 @@ dfx build merchant
 cargo run --bin user > ./src/canisters/user.did
 cargo run --bin manager > ./src/canisters/manager.did
 cargo run --bin merchant > ./src/canisters/merchant.did
+
+dfx generate

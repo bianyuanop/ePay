@@ -21,6 +21,7 @@ service : () -> {
   create_merchant : (principal) -> (Result_1);
   get_merchant_by_id : (nat64) -> (opt principal) query;
   get_merchant_conf : (nat64) -> (Result_2);
+  get_user_canister : () -> (opt principal) query;
   install_user_canister : () -> (Result_3);
   remove_manager : (principal) -> (Result);
   set_merchant_block : (nat64, bool) -> (Result);

@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, vec};
+use std::{collections::{BTreeMap, HashSet}, vec};
 
 use candid::{Deserialize, CandidType, Nat, Principal};
 
@@ -16,7 +16,7 @@ pub struct User {
     pub blocked: bool,
 
     // owned merchants IDs
-    pub merchants: Vec<u64>,
+    pub merchants: HashSet<u64>,
 
     orders: Vec<OrderBrief>,
 }
@@ -29,7 +29,7 @@ impl From<Principal> for User {
             principal,
             blocked: false,
             orders: vec![],
-            merchants: vec![]
+            merchants: HashSet::new()
         }
     }
 }
@@ -58,7 +58,7 @@ impl UserDB {
             principal,
             blocked: false,
             orders: vec![],
-            merchants: vec![]
+            merchants: HashSet::new()
         };
         self.users.insert(principal, user);
     }
@@ -88,5 +88,9 @@ impl UserDB {
 
     pub fn get_user_mut(&mut self, user_id: Principal) -> Option<&mut User> {
         self.users.get_mut(&user_id)
+    }
+
+    pub fn has_user(&self, user_id: Principal) -> bool {
+        self.users.contains_key(&user_id)
     }
 }
