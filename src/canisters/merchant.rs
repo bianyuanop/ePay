@@ -155,6 +155,15 @@ fn comment_order(order_id: u64, payload: Vec<u8>, payload_spec: String) -> Resul
 
 #[query]
 #[candid_method(query)]
+fn get_on_hold_orders() -> Vec<u64> {
+    MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+        merchant.orders_on_hold.clone()
+    })
+}
+
+#[query]
+#[candid_method(query)]
 fn owner() -> Principal {
     MERCHNANT.with(|merchant| {
         let merchant = merchant.borrow();
@@ -175,7 +184,7 @@ async fn refund_order(order_id: u64) -> Result<bool, String> {
 
     match order {
         Some(o) => {
-            if o.paid {
+            if !o.paid {
                 Err(format!("order unpaid: {}", o.id).into())
             } else {
                 match o.refund().await {

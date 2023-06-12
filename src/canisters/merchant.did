@@ -33,6 +33,7 @@ type TokenType = variant { ICRC1; DIP20; OTHER };
 service : (principal, MerchantConfig) -> {
   comment_order : (nat64, vec nat8, text) -> (Result);
   get_config : () -> (MerchantConfig);
+  get_on_hold_orders : () -> (vec nat64) query;
   order_paid : (nat64) -> (Result) query;
   owner : () -> (principal) query;
   pay_order : (nat64) -> (Result);
