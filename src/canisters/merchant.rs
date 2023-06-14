@@ -106,9 +106,14 @@ async fn pay_order(order_id: u64) -> Result<bool, String> {
     let caller = ic_cdk::caller();
 
     let (order, merchant_id) = MERCHNANT.with(|merchant| {
-        let merchant = merchant.borrow_mut();
-        match merchant.get_order(order_id) {
-            Some(o) => (Some((*o).clone()), Some(merchant.id)),
+        let mut merchant = merchant.borrow_mut();
+        match merchant.get_order_mut(order_id) {
+            Some(o) => {
+                // update payer as caller
+                o.payer = Account { owner: ic_cdk::caller(), subaccount: None};
+
+                (Some((*o).clone()), Some(merchant.id))
+            },
             None => (None, None)
         } 
     });
