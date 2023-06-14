@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashSet, HashMap};
 use std::ops::{Mul, Sub, Div};
 use std::time::{self, Duration};
 
@@ -11,8 +11,9 @@ use super::comment::Comment;
 use super::order::Order;
 use super::balance::Balance;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone)]
 pub struct Merchant {
+    pub id: u64,
     pub owner: Principal,
     pub deposit_account: Account,
     pub balance: Balance,
@@ -36,6 +37,7 @@ pub struct Merchant {
 impl Default for Merchant {
     fn default() -> Self {
         Self { 
+            id: 0,
             owner: Principal::anonymous(),
             deposit_account: Account::from(Principal::anonymous()),
             balance: Balance::default(), 
@@ -56,6 +58,7 @@ impl Default for Merchant {
 impl Merchant {
     pub fn new(conf: MerchantConfig) -> Self {
         Self { 
+            id: 0,
             owner: Principal::anonymous(),
             deposit_account: Account::from(Principal::anonymous()),
             balance: Balance::default(), 
@@ -119,6 +122,15 @@ impl Merchant {
         }
 
         self.orders_on_hold = left;
+    }
+
+    pub fn get_merchant_masked_off_orders(&self) -> Merchant {
+        // TODO: should do with default -> fill to prevent high consumption of copying `orders` as there will be thousands of orders
+        let mut res = (*self).clone();
+        res.orders_on_hold = vec![];
+        res.orders = BTreeMap::new();
+
+        res
     }
 }
 

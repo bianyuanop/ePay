@@ -1,6 +1,5 @@
 type OrderBrief = record { merchant_id : nat64; order_id : nat64 };
-type Result = variant { Ok : bool; Err : text };
-type Result_1 = variant { Ok; Err : text };
+type Result = variant { Ok; Err : text };
 type User = record {
   id : nat;
   "principal" : principal;
@@ -10,9 +9,9 @@ type User = record {
   merchants : vec nat64;
 };
 service : () -> {
-  add_order : (principal, nat64, nat64) -> (Result);
-  attach_merchant2user : (principal, nat64) -> (Result_1);
+  add_order : (principal, nat64, nat64) -> ();
+  attach_merchant2user : (principal, nat64) -> (Result);
   get_user : (principal) -> (opt User) query;
   has_user : (principal) -> (bool) query;
-  register : (principal) -> (Result_1);
+  register : (principal) -> (Result);
 }

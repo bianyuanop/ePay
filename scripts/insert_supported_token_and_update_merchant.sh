@@ -1,6 +1,8 @@
 #!/usr/bin/ic-repl
 
-let token_principal = principal "d6g4o-amaaa-aaaaa-qaaoq-cai";
+load "info.sh";
+
+let token_principal = TOKEN;
 let standard = "DIP20";
 
 let ps = vec {token_principal; };

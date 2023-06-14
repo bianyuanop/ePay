@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde_derive::Deserialize;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct WasmStorage {
     pub merchant_wasm: Option<Vec<u8>>,
     pub user_wasm: Option<Vec<u8>>,

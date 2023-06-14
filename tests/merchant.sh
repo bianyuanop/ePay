@@ -2,16 +2,27 @@
 load "prelude.sh";
 load "dip20.sh";
 
-import fake = "2vxsx-fae" as "../src/ePay_backend/src/canisters/merchant.did";
+import fake = "be2us-64aaa-aaaaa-qaabq-cai" as "../src/canisters/merchant.did";
 let wasm = file("../target/wasm32-unknown-unknown/release/merchant_opt.wasm");
 
-identity token_minter "~/.config/dfx/identity/test/identity.pem";
+identity test;
 identity alice;
 identity bob;
-
 identity merchant;
+
+
+let merchant_config = record {
+  order_check_duration = (60: nat64);
+  order_on_hold_duration = (60: nat64);
+  fee_rate = (0: float32);
+  fee_to = test;
+  token_allowed = vec {};
+};
+
+
 let args = encode fake.__init_args(
-  merchant
+  merchant,
+  merchant_config
 );
 
 let MER = install(wasm, args, null);
@@ -20,25 +31,4 @@ call MER.owner();
 
 assert (_ : principal) == merchant;
 
-let TOKEN = service "bkyz2-fmaaa-aaaaa-qaaaq-cai";
-call TOKEN.symbol();
-
-assert _ == "DFC";
-
-identity token_minter;
-call TOKEN.transfer(alice, 10_000_000_000);
-
-let token_list = vec { principal "bkyz2-fmaaa-aaaaa-qaaaq-cai"; };
-let token_standards = vec {"DIP20";};
-let token_amount = vec {(100_000_000 : nat)};
-let payload = vec {1; 2; 3; 4};
-let payload_spec = "parser.v1";
-let payer = account_id(alice, account(alice));
-
-identity merchant;
-call MER.publish_order(token_list, token_standards, token_amount, payload, payload_spec, payer);
-
-identity alice;
-call TOKEN.approve((MER: principal), (100_000_000: nat));
-call MER.pay_order((0: nat64));
-
+call MER.get_merchant_info();

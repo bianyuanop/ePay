@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashMap, borrow::BorrowMut, time::Duration
 use ic_cdk::caller;
 use ic_cdk_macros::{init, query, update};
 use candid::{Principal, Nat, candid_method};
-use ePay_backend::{merchant::merchant::{Merchant}, management::state::{StateInfo, MerchantConfig}, merchant::{order::{Order, self}, self}, tokens::{TokenInfo, TokenType}, types::Account};
+use ePay_backend::{merchant::merchant::{Merchant}, management::state::{StateInfo, MerchantConfig}, merchant::{order::{Order, self}, self}, tokens::{TokenInfo, TokenType}, types::Account, interop::user::UserOp};
 
 thread_local! {
     static STATE_INFO: RefCell<StateInfo> = RefCell::new(StateInfo::default());
@@ -12,17 +12,20 @@ thread_local! {
 
 #[init]
 #[candid_method(init)]
-fn init(owner: Principal, conf: MerchantConfig) {
+fn init(owner: Principal, user_can: Principal, id: u64, conf: MerchantConfig) {
     let caller = ic_cdk::api::caller();
     STATE_INFO.with(|info| {
         let mut info = info.borrow_mut();
         info.add_manager(caller);
+
+        info.user_canister = Some(user_can);
     });
 
     MERCHNANT.with(|merchant| {
         let mut merchant = merchant.borrow_mut();
         merchant.owner = owner;
         merchant.conf = conf.clone();
+        merchant.id = id;
     });
 
     ic_cdk_timers::set_timer_interval(Duration::from_secs(conf.order_check_duration.clone()), || {
@@ -31,6 +34,15 @@ fn init(owner: Principal, conf: MerchantConfig) {
             merchant.check_orders_and_update();
         })
     });
+}
+
+#[query(guard = "is_merchant")]
+#[candid_method(query)]
+fn get_merchant_info() -> Merchant {
+    MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+        merchant.get_merchant_masked_off_orders()
+    })
 }
 
 #[update(guard = "is_merchant")]
@@ -91,37 +103,47 @@ fn view_order(order_id: u64) -> Result<Order, String> {
 #[update(guard = "is_normal")]
 #[candid_method(update)]
 async fn pay_order(order_id: u64) -> Result<bool, String> {
-    let order = MERCHNANT.with(|merchant| {
+    let caller = ic_cdk::caller();
+
+    let (order, merchant_id) = MERCHNANT.with(|merchant| {
         let merchant = merchant.borrow_mut();
         match merchant.get_order(order_id) {
-            Some(o) => Some((*o).clone()),
-            None => None
+            Some(o) => (Some((*o).clone()), Some(merchant.id)),
+            None => (None, None)
         } 
     });
 
-    match order {
-        Some(o) => {
-            if o.paid {
-                Ok(true)
-            } else {
-                match o.pay().await {
-                     Ok(paid) => {
-                        if paid {
-                            MERCHNANT.with(|merhcant| {
-                                let mut merchant = merhcant.borrow_mut();
-                                match merchant.get_order_mut(order_id) {
-                                    Some(o) => o.mark_as_paid(), 
-                                    None => {}
-                                };
-                            });
-                        }
-                        Ok(paid)
-                    },
-                    Err(e) => Err(e)
-                }
+    let user_can_principal = STATE_INFO.with(|info| {
+        let info = info.borrow();
+        info.user_canister.clone()
+    });
+
+    if let (Some(o), Some(m)) = (order, merchant_id) {
+        if o.paid {
+            Err("order paid".into())
+        } else {
+            match o.pay().await {
+                Ok(paid) => {
+                    MERCHNANT.with(|merhcant| {
+                        let mut merchant = merhcant.borrow_mut();
+                        match merchant.get_order_mut(order_id) {
+                            Some(o) => o.mark_as_paid(), 
+                            None => {}
+                        };
+                    });
+
+                    if let Some(u) = user_can_principal {
+                        let user_op = UserOp { principal: u };
+                        user_op.attach_order2user(caller, m, o.id).await;
+                    }
+
+                    Ok(paid)
+                },
+                Err(e) => Err(e)
             }
-        }, 
-        None => Err(format!("no such order: {}", order_id).into())
+        }
+    } else {
+        Err(format!("no such order: {}", order_id).into())
     }
 }
 

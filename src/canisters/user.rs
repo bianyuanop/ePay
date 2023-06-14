@@ -40,16 +40,20 @@ fn register(user: Principal) -> Result<(), String> {
 
 #[update]
 #[candid_method(update)]
-fn add_order(user_id: Principal, order_id: u64, merchant_id: u64) -> Result<bool, String> {
+fn add_order(user_id: Principal, order_id: u64, merchant_id: u64) {
     USERDB.with(|db| {
         let mut db = db.borrow_mut();
         let user = db.get_user_mut(user_id);
         match user {
             Some(o) => {
                 o.add_order(merchant_id, order_id);
-                Ok(true)
             },
-            None => Err(format!("no such user: {}", user_id).into())
+            None => {
+                // should always work since register only fail at no such user
+                db.generate_user_and_insert(user_id);
+                let user = db.get_user_mut(user_id).unwrap();
+                user.add_order(merchant_id, order_id);
+            }
         }
     })
 }

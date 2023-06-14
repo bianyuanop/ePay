@@ -5,7 +5,7 @@ use candid::{Deserialize, CandidType, Principal};
 
 use crate::{tokens::TokenInfo};
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct MerchantConfig {
     // secs
     pub order_check_duration: u64,
@@ -29,7 +29,7 @@ impl Default for MerchantConfig {
     }
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct StateInfo {
     pub owner: Principal,
     pub managers: HashSet<Principal>,
@@ -93,6 +93,10 @@ impl MerchantDB {
         self.merchant_ptr += 1;
 
         self.merchant_ptr-1
+    }
+
+    pub fn update_merchant(&mut self, id: u64, merchant: Principal) {
+        self.merchants.insert(id, merchant);
     }
 
     pub fn get_merchant_principal(&self, id: u64) -> Option<Principal> {

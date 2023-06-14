@@ -3,13 +3,13 @@ use std::{collections::HashMap};
 
 use crate::tokens::TokenInfo;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone)]
 pub struct TokenBalance {
     token_info: TokenInfo,
     balance: Nat
 }
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Deserialize, Default, Clone)]
 pub struct Balance {
     // token name -> balance
     token_balances: HashMap<Principal, TokenBalance>,    

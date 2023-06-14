@@ -1,9 +1,9 @@
 use std::{cell::RefCell, collections::{HashSet, HashMap, BTreeMap}};
 use ePay_backend::{management::{state::{StateInfo, MerchantDB, MerchantConfig}, wasm_store::WasmStorage, report::MerchantManageReport}, interop::{merchant::MerchantOp, user::UserOp}, utils::create_and_install_canister, tokens::{TokenInfo, TokenType}};
 
-use ic_cdk_macros::{init, query, update};
+use ic_cdk_macros::{init, query, update, pre_upgrade, post_upgrade};
 use candid::{candid_method, Principal};
-use ic_cdk::api::management_canister::main::{
+use ic_cdk::{api::management_canister::main::{
     CreateCanisterArgument,
     CanisterSettings,
     InstallCodeArgument,
@@ -11,7 +11,7 @@ use ic_cdk::api::management_canister::main::{
     install_code,
     CanisterInstallMode,
     WasmModule,
-};
+}, storage};
 
 
 thread_local! {
@@ -270,18 +270,34 @@ async fn create_merchant(owner: Principal) -> Result<u64, String> {
                 freezing_threshold: None
             })
         };
+        let user_canister_principal = STATE_INFO.with(|info| {
+            let info = info.borrow();
+            info.user_canister
+        });
+
+        if user_canister_principal.is_none() {
+            return Err("user canister not installed yet".into());
+        }
+
+        let merchant_id = MERCHANT_DB.with(|db| {
+            let mut db = db.borrow_mut();
+            // since merchant id allocation relies on atomiciy and only operations between await func calls are atomic
+            // see https://forum.dfinity.org/t/how-to-ensure-atomicity-when-calling-a-canister-function/7602
+            // here we insert an anonymous principal first then update it after canister creation
+            db.add_merchant(Principal::anonymous())
+        });
+
         // see `merchant.did`
         // TODO: destroy on failure
-        let init_arg = candid::encode_args((owner, merchant_conf)).unwrap();
-
+        let init_arg = candid::encode_args((owner, user_canister_principal.unwrap(), merchant_id, merchant_conf,)).unwrap();
         let install_res = create_and_install_canister(canister_creation_arg, init_arg, wasm_module).await;
 
         match install_res {
             Ok(canister_id) => {
-                let mut merchant_id: u64 = 0;
+
                 MERCHANT_DB.with(|db| {
                     let mut db = db.borrow_mut();
-                    merchant_id = db.add_merchant(canister_id);
+                    db.update_merchant(merchant_id, canister_id);
                 });
 
                 let user_op = STATE_INFO.with(|info| {
@@ -322,7 +338,6 @@ fn get_user_canister() -> Option<Principal> {
         info.user_canister
     })
 }
-
 
 fn main() {
     candid::export_service!();
