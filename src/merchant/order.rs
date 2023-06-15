@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash, vec, fmt::format};
+use std::{collections::HashMap, hash::Hash, vec, fmt::format, ops::Sub};
 
 use candid::{CandidType, Deserialize, Nat, Principal, parser::token};
 
@@ -30,6 +30,7 @@ pub struct Order {
     // on chain time
     pub timestamp: u64,
     pub tokens_needed: HashMap<TokenInfo, Nat>,
+    // receiving account seems redundant
     pub receiving_account: Account,
     // can be extended by a token scheme contract on behalf payers
     pub payer: Account,
@@ -97,7 +98,13 @@ impl Order {
             match token_info.token_type {
                 TokenType::DIP20 => {
                     let token = DIP20::new(token_info.principal);
-                    let receipt = token.transfer_from(self.receiving_account.owner, self.payer.owner, (*amount).clone()).await;
+                    let metadata = token.get_metadata().await;
+                    let fee = metadata.fee;
+                    let mut amount2refund = (*amount).clone();
+                    // the implementation of DIP20 requires `balance > amount + fee`
+                    amount2refund = amount2refund.sub(fee).sub(Nat::from(1));
+
+                    let receipt = token.transfer(self.payer.owner, amount2refund).await;
                     match receipt {
                         Ok(_) =>  (),
                         Err(e) => return Err(format!("{:?}", e).into())
@@ -117,5 +124,3 @@ impl Order {
         self.status == OrderStatus::Controversial
     }
 }
-
-

@@ -83,6 +83,9 @@ impl Merchant {
         self.orders.insert(self.order_ptr, order);
         self.order_ptr += 1;
 
+        // hold order
+        self.orders_on_hold.push(self.order_ptr-1);
+
         self.order_ptr-1
     }
 
