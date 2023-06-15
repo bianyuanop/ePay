@@ -19,9 +19,9 @@ impl Default for MerchantConfig {
     fn default() -> Self {
         Self {
             // 1 hour to check
-            order_check_duration: 60*60,
+            order_check_duration: 60,
             // hold 7 days before merchant can redeem the assets paid by buyers
-            order_on_hold_duration: 60*60*24*7,
+            order_on_hold_duration: 60,
             fee_rate: 0.001,
             fee_to: Principal::anonymous(),
             token_allowed: HashSet::new()

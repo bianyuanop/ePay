@@ -111,7 +111,7 @@ impl Merchant {
 
             let time_elapsed = Duration::from_nanos(now - order_created_at);
 
-            if time_elapsed >= Duration::from_secs(self.conf.order_on_hold_duration) && !order.is_controversial() {
+            if time_elapsed >= Duration::from_secs(self.conf.order_on_hold_duration) && !order.is_controversial() && order.paid {
                 // fee application
                 for (token_info, amount) in order.tokens_needed.iter() {
                     let (to_merchant, to_network) = Merchant::calculate_fee(self.conf.fee_rate, amount);

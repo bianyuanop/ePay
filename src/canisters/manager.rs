@@ -29,8 +29,8 @@ async fn init() {
         info.add_manager(caller);
         info.set_owner(caller);
         info.merchant_conf = MerchantConfig {
-            order_check_duration: 60*60,
-            order_on_hold_duration: 60*60*24*7,
+            order_check_duration: 60,
+            order_on_hold_duration: 60,
             fee_rate: 0.001,
             fee_to: caller,
             token_allowed: HashSet::new()
