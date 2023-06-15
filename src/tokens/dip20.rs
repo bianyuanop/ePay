@@ -1,3 +1,5 @@
+use std::ops::Sub;
+
 // The implementation is copied and altered from https://github.com/dfinity/examples/blob/38c254513c816055d8b653b586804ccb6c6dfcb7/rust/defi/src/defi_dapp/dip20.rs
 use candid::{CandidType, Deserialize, Nat, Principal};
 
@@ -74,5 +76,9 @@ impl DIP20 {
             ic_cdk::api::call::call(self.principal, "getMetadata", ()).await;
 
         call_result.unwrap().0
+    }
+
+    pub fn calculate_transferable(amount: Nat, fee: Nat) -> Nat {
+        return amount.sub(fee).sub(Nat::from(1));
     }
 }

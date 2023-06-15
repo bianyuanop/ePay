@@ -5,14 +5,14 @@ use crate::tokens::TokenInfo;
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct TokenBalance {
-    token_info: TokenInfo,
-    balance: Nat
+    pub token_info: TokenInfo,
+    pub balance: Nat
 }
 
 #[derive(CandidType, Deserialize, Default, Clone)]
 pub struct Balance {
     // token name -> balance
-    token_balances: HashMap<Principal, TokenBalance>,    
+    pub token_balances: HashMap<Principal, TokenBalance>,    
 }
 
 impl Balance {

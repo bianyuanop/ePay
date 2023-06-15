@@ -1,11 +1,13 @@
 use std::collections::{BTreeMap, HashSet, HashMap};
-use std::ops::{Mul, Sub, Div};
+use std::ops::{Mul, Sub, Div, Add};
 use std::time::{self, Duration};
 
 use candid::{Principal, CandidType, Deserialize, Nat};
 use ic_cdk_timers::TimerId;
 
 use crate::management::state::MerchantConfig;
+use crate::tokens::dip20::DIP20;
+use crate::tokens::TokenType;
 use crate::{types::Account};
 use super::comment::Comment;
 use super::order::Order;
@@ -132,6 +134,38 @@ impl Merchant {
         let mut res = (*self).clone();
         res.orders_on_hold = vec![];
         res.orders = BTreeMap::new();
+
+        res
+    }
+
+    // since we can't call async func in closure, so need to deposit first then update
+    pub async fn deposit(&self) -> Vec<Result<Nat, String>> {
+        let mut res = vec![];
+        for (token_principal, balance) in self.balance.token_balances.iter() {
+            let token_info = balance.token_info;
+            match token_info.token_type {
+                TokenType::DIP20 => {
+                    let token = DIP20::new(*token_principal);
+                    let metadata = token.get_metadata().await;
+                    let fee = metadata.fee;
+                    let amount2deposit = DIP20::calculate_transferable(balance.balance.clone(), fee);
+
+                    let transfer_res = token.transfer(self.deposit_account.owner, amount2deposit).await;
+
+                    match transfer_res {
+                        Ok(n) => {
+                            res.push(Ok(n));
+                        },
+                        Err(e) => {
+                            res.push(Err(format!("{:?}", e).into()));
+                        }
+                    }
+                },
+                _ => {
+                    ic_cdk::println!("undepositable");
+                }
+            }
+        }
 
         res
     }

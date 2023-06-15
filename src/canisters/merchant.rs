@@ -283,6 +283,16 @@ fn get_config() -> MerchantConfig {
     })
 }
 
+fn deposit() -> Vec<Result<Nat, String>> {
+    let balance = MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow(); 
+        merchant.balance.clone()
+    });
+
+    vec![]
+}
+
+
 fn main() {
     candid::export_service!();
     std::println!("{}", __export_service());
