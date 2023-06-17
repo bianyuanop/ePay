@@ -36,8 +36,9 @@ While pertaining the payment flows that centralized services as Paypal and Alipa
 + Fee scheme
 + Payment SDK 
 + DAO based management
++ ICRC  token support
 
-## Development guides 
+## Developer guides 
 
 Before start, clone this project with git 
 
@@ -71,7 +72,5 @@ to have the whole developing environment on.
 
 ### Tests
 
-tests see 
-
-[tests]: ./tests
+[tests](./tests)
 
