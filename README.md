@@ -36,7 +36,8 @@ While pertaining the payment flows that centralized services as Paypal and Alipa
 + Fee scheme
 + Payment SDK 
 + DAO based management
-+ ICRC  token support
++ ICRC token support
++ Stable memory update
 
 ## Developer guides 
 
