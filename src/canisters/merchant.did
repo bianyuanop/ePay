@@ -20,6 +20,7 @@ type Merchant = record {
   blocked : bool;
   info : opt vec nat8;
   orders : vec record { nat64; Order };
+  notifer : opt Notifier;
   order_ptr : nat64;
   orders_on_hold : vec nat64;
   comments : vec Comment;
@@ -31,6 +32,7 @@ type MerchantConfig = record {
   order_check_duration : nat64;
   order_on_hold_duration : nat64;
 };
+type Notifier = record { host : text; address2notify : text };
 type Order = record {
   id : nat64;
   tokens_needed : vec record { TokenInfo; nat };
@@ -68,6 +70,7 @@ service : (principal, principal, nat64, MerchantConfig) -> {
     ) -> (Result_1);
   refund_order : (nat64) -> (Result);
   set_block : (bool) -> (bool);
+  set_notifer : (text, text) -> ();
   set_verify : (bool) -> (bool);
   update_config : (MerchantConfig) -> ();
   update_info : (text, vec nat8) -> ();

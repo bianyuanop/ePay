@@ -3,7 +3,10 @@ use std::{cell::RefCell, collections::HashMap, borrow::BorrowMut, time::Duration
 use ic_cdk::caller;
 use ic_cdk_macros::{init, query, update};
 use candid::{Principal, Nat, candid_method};
-use ePay_backend::{merchant::merchant::{Merchant}, management::state::{StateInfo, MerchantConfig}, merchant::{order::{Order, self}, self}, tokens::{TokenInfo, TokenType}, types::Account, interop::user::UserOp};
+use ePay_backend::{merchant::merchant::{Merchant}, management::state::{StateInfo, MerchantConfig}, merchant::{order::{Order, self}, self, notify::Notifier}, tokens::{TokenInfo, TokenType}, types::Account, interop::user::UserOp};
+use ePay_backend::{merchant::notify};
+
+
 
 thread_local! {
     static STATE_INFO: RefCell<StateInfo> = RefCell::new(StateInfo::default());
@@ -129,13 +132,29 @@ async fn pay_order(order_id: u64) -> Result<bool, String> {
         } else {
             match o.pay().await {
                 Ok(paid) => {
+                    let mut notifier: Option<notify::Notifier> = None; 
+
                     MERCHNANT.with(|merhcant| {
                         let mut merchant = merhcant.borrow_mut();
+                        notifier = merchant.notifer.clone();
                         match merchant.get_order_mut(order_id) {
                             Some(o) => o.mark_as_paid(), 
                             None => {}
                         };
                     });
+
+                    // actively notify merchant
+                    if let Some(n) = notifier {
+                        match n.notify(notify::Notification::OrderPaid(o.id)).await {
+                            Ok(_) => { 
+                                ic_cdk::println!("notifying successfully");
+                            },
+                            Err(e) => {
+                                // TODO: add to log
+                                ic_cdk::print(format!("{:?}", e));
+                            }
+                        }
+                    }
 
                     if let Some(u) = user_can_principal {
                         let user_op = UserOp { principal: u };
@@ -283,15 +302,14 @@ fn get_config() -> MerchantConfig {
     })
 }
 
-fn deposit() -> Vec<Result<Nat, String>> {
-    let balance = MERCHNANT.with(|merchant| {
-        let merchant = merchant.borrow(); 
-        merchant.balance.clone()
-    });
-
-    vec![]
+#[update(guard = "is_merchant")]
+#[candid_method(update)]
+fn set_notifer(host: String, address2notify: String) {
+    MERCHNANT.with(|merchant| {
+        let mut merchant = merchant.borrow_mut();
+        merchant.set_notifer(host, address2notify)
+    })
 }
-
 
 fn main() {
     candid::export_service!();

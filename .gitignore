@@ -22,3 +22,6 @@ dist/
 
 # environment variables
 .env
+
+# python3 env
+venv

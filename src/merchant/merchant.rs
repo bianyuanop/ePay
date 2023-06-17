@@ -1,5 +1,7 @@
+use std::borrow::Borrow;
 use std::collections::{BTreeMap, HashSet, HashMap};
 use std::ops::{Mul, Sub, Div, Add};
+use std::result;
 use std::time::{self, Duration};
 
 use candid::{Principal, CandidType, Deserialize, Nat};
@@ -10,8 +12,10 @@ use crate::tokens::dip20::DIP20;
 use crate::tokens::TokenType;
 use crate::{types::Account};
 use super::comment::Comment;
+use super::notify::{self, Notifier};
 use super::order::Order;
 use super::balance::Balance;
+
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct Merchant {
@@ -34,6 +38,7 @@ pub struct Merchant {
     pub conf: MerchantConfig,
     pub comments: Vec<Comment>,
     pub verified: bool,
+    pub notifer: Option<Notifier>
 }
 
 impl Default for Merchant {
@@ -52,7 +57,8 @@ impl Default for Merchant {
             blocked: false,
             conf: MerchantConfig::default(),
             comments: vec![],
-            verified: false
+            verified: false,
+            notifer: None
         }
     }
 }
@@ -73,7 +79,8 @@ impl Merchant {
             blocked: false,
             conf,
             comments: vec![],
-            verified: false
+            verified: false,
+            notifer: None
         }
     }
 
@@ -99,6 +106,7 @@ impl Merchant {
         self.orders.get(&order_id)
     }
 
+    #[allow(unused_variables)]
     pub fn calculate_fee(fee_rate: f32, amount: &Nat) -> (Nat, Nat) {
         // TODO: safe math here
         ((*amount).clone(), Nat::from(0))
@@ -113,12 +121,14 @@ impl Merchant {
 
             let time_elapsed = Duration::from_nanos(now - order_created_at);
 
-            if time_elapsed >= Duration::from_secs(self.conf.order_on_hold_duration) && !order.is_controversial() && order.paid {
-                // fee application
-                for (token_info, amount) in order.tokens_needed.iter() {
-                    let (to_merchant, to_network) = Merchant::calculate_fee(self.conf.fee_rate, amount);
-                    self.balance.add(token_info, &to_merchant);
-                    self.fee.add(token_info, &to_network);
+            if time_elapsed >= Duration::from_secs(self.conf.order_on_hold_duration) && !order.is_controversial() {
+                if order.paid {
+                    // fee application
+                    for (token_info, amount) in order.tokens_needed.iter() {
+                        let (to_merchant, to_network) = Merchant::calculate_fee(self.conf.fee_rate, amount);
+                        self.balance.add(token_info, &to_merchant);
+                        self.fee.add(token_info, &to_network);
+                    }
                 }
                 order.close();
             } else {
@@ -168,6 +178,23 @@ impl Merchant {
         }
 
         res
+    }
+
+    pub fn set_notifer(&mut self, host: String, address2notify: String) {
+        let notifer = Notifier {
+            host,
+            address2notify
+        };
+
+        self.notifer = Some(notifer);
+    }
+
+    pub async fn notify(&self, notifcation: notify::Notification) -> Result<(), String>{
+        if let Some(notifier) = self.notifer.borrow() {
+            notifier.notify(notifcation).await
+        } else {
+            Err("notifer not set".into())
+        }
     }
 }
 
