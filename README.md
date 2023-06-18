@@ -77,4 +77,5 @@ to have the whole developing environment on.
 
 ### Frontend 
 
-A demo frontend can be found (here)[https://github.com/bianyuanop/epay_frontend].
+A demo frontend can be found [here](https://github.com/bianyuanop/epay_frontend)
+
