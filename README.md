@@ -55,7 +55,7 @@ dfx canister create manager
 
 After this, you need to change the principal of MANAGER under `scripts/info.ts` to the principal you just get. 
 
-Also, one DIP20 token is needed for testing the functionalities of the system. You can simply type 
+Also, a DIP20 token canister is needed for testing the functionalities of the system. You can simply type 
 
 ```shell
 ./token_deployment/dip20/deploy.sh
