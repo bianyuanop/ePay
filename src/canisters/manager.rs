@@ -287,6 +287,8 @@ async fn create_merchant(owner: Principal) -> Result<u64, String> {
             db.add_merchant(Principal::anonymous())
         });
 
+
+
         // see `merchant.did`
         // TODO: destroy on failure
         let init_arg = candid::encode_args((owner, user_canister_principal.unwrap(), merchant_id, merchant_conf,)).unwrap();

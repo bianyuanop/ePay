@@ -25,3 +25,5 @@ dist/
 
 # python3 env
 venv
+
+prod

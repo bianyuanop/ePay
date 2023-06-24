@@ -1,5 +1,5 @@
 use candid::Principal;
-use ic_cdk::api::management_canister::{main::{CreateCanisterArgument, InstallCodeArgument, create_canister, install_code, CanisterInstallMode}, provisional::CanisterId};
+use ic_cdk::api::management_canister::{main::{CreateCanisterArgument, InstallCodeArgument, create_canister, install_code, CanisterInstallMode, deposit_cycles, create_canister_with_extra_cycles}, provisional::CanisterId};
 use ic_ledger_types::{Subaccount, AccountIdentifier};
 
 use crate::types::Account;
@@ -20,7 +20,9 @@ pub fn subaccount_to_order_id(subaccount: Subaccount) -> u64 {
 }
 
 pub async fn create_and_install_canister(create_canister_arg: CreateCanisterArgument, init_arg: Vec<u8>, wasm_module: Vec<u8>) -> Result<CanisterId, String> {
-    let canister_id = create_canister(create_canister_arg).await.ok().unwrap().0.canister_id;
+    let canister_id = 
+        create_canister_with_extra_cycles(create_canister_arg, 100_000_000_000).await.ok().unwrap().0.canister_id;
+    // create_canister(create_canister_arg).await.ok().unwrap().0.canister_id;
 
     let install_arg = InstallCodeArgument {
         mode: CanisterInstallMode::Install,   

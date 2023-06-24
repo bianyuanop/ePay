@@ -47,13 +47,15 @@ type Order = record {
 };
 type OrderStatus = variant { Refunded; Open; Closed; Controversial; Unpaid };
 type Result = variant { Ok : bool; Err : text };
-type Result_1 = variant { Ok : nat64; Err : text };
-type Result_2 = variant { Ok : Order; Err : text };
+type Result_1 = variant { Ok : nat; Err : text };
+type Result_2 = variant { Ok : nat64; Err : text };
+type Result_3 = variant { Ok : Order; Err : text };
 type TokenBalance = record { balance : nat; token_info : TokenInfo };
 type TokenInfo = record { "principal" : principal; token_type : TokenType };
 type TokenType = variant { ICRC1; DIP20; OTHER };
 service : (principal, principal, nat64, MerchantConfig) -> {
   comment_order : (nat64, vec nat8, text) -> (Result);
+  deposit : () -> (vec Result_1);
   get_config : () -> (MerchantConfig);
   get_merchant_info : () -> (Merchant) query;
   get_on_hold_orders : () -> (vec nat64) query;
@@ -67,12 +69,12 @@ service : (principal, principal, nat64, MerchantConfig) -> {
       opt vec nat8,
       opt text,
       Account,
-    ) -> (Result_1);
+    ) -> (Result_2);
   refund_order : (nat64) -> (Result);
   set_block : (bool) -> (bool);
   set_notifer : (text, text) -> ();
   set_verify : (bool) -> (bool);
   update_config : (MerchantConfig) -> ();
   update_info : (text, vec nat8) -> ();
-  view_order : (nat64) -> (Result_2) query;
+  view_order : (nat64) -> (Result_3) query;
 }

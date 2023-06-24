@@ -14,8 +14,24 @@ use crate::{types::Account};
 use super::comment::Comment;
 use super::notify::{self, Notifier};
 use super::order::Order;
-use super::balance::Balance;
+use super::balance::{Balance, TokenBalance};
 
+pub type DepositLog = Vec<Result<Nat, String>>;
+
+#[derive(CandidType, Deserialize, Clone)]
+pub struct DepositResult {
+    pub log: DepositLog,
+    pub new_balance: Balance
+}
+
+impl Default for DepositResult {
+    fn default() -> Self {
+        Self {
+            log: vec![], 
+            new_balance: Balance::default()
+        }
+    }
+}
 
 #[derive(CandidType, Deserialize, Clone)]
 pub struct Merchant {
@@ -148,9 +164,10 @@ impl Merchant {
         res
     }
 
-    // since we can't call async func in closure, so need to deposit first then update
-    pub async fn deposit(&self) -> Vec<Result<Nat, String>> {
-        let mut res = vec![];
+    pub async fn deposit(&self) -> DepositResult {
+        let mut log: DepositLog = vec![];
+        let mut new_balance = Balance::default();
+
         for (token_principal, balance) in self.balance.token_balances.iter() {
             let token_info = balance.token_info;
             match token_info.token_type {
@@ -164,20 +181,31 @@ impl Merchant {
 
                     match transfer_res {
                         Ok(n) => {
-                            res.push(Ok(n));
+                            log.push(Ok(n));
+                            // limit of dip20 token, can only transfer `balance - 1` tokens
+                            let token_balance = TokenBalance {
+                                token_info: token_info.clone(),
+                                balance: Nat::from(1)
+                            };
+                            new_balance.token_balances.insert(token_info.principal, token_balance);
                         },
                         Err(e) => {
-                            res.push(Err(format!("{:?}", e).into()));
+                            new_balance.token_balances.insert(token_info.principal, (*balance).clone());
+                            log.push(Err(format!("{:?}", e).into()));
                         }
                     }
                 },
                 _ => {
                     ic_cdk::println!("undepositable");
+                    log.push(Err(format!("{} is not supported, this looks like a internal error", token_info.principal).into()))
                 }
             }
         }
 
-        res
+        DepositResult {
+            log,
+            new_balance
+        }
     }
 
     pub fn set_notifer(&mut self, host: String, address2notify: String) {
@@ -187,6 +215,10 @@ impl Merchant {
         };
 
         self.notifer = Some(notifer);
+    }
+
+    pub fn update_balance(&mut self, balance: Balance) {
+        self.balance = balance;
     }
 
     pub async fn notify(&self, notifcation: notify::Notification) -> Result<(), String>{

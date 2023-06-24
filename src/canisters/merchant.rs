@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashMap, borrow::BorrowMut, time::Duration
 use ic_cdk::caller;
 use ic_cdk_macros::{init, query, update};
 use candid::{Principal, Nat, candid_method};
-use ePay_backend::{merchant::merchant::{Merchant}, management::state::{StateInfo, MerchantConfig}, merchant::{order::{Order, self}, self, notify::Notifier}, tokens::{TokenInfo, TokenType}, types::Account, interop::user::UserOp};
+use ePay_backend::{merchant::merchant::{Merchant}, management::state::{StateInfo, MerchantConfig}, merchant::{order::{Order, self}, self, notify::Notifier, merchant::DepositLog}, tokens::{TokenInfo, TokenType}, types::Account, interop::user::UserOp};
 use ePay_backend::{merchant::notify};
 
 
@@ -169,6 +169,25 @@ async fn pay_order(order_id: u64) -> Result<bool, String> {
     } else {
         Err(format!("no such order: {}", order_id).into())
     }
+}
+
+#[update]
+#[candid_method(update)]
+async fn deposit() -> DepositLog {
+    let mer = MERCHNANT.with(|merchant| {
+        let merchant = merchant.borrow();
+
+        merchant.get_merchant_masked_off_orders().clone()
+    });
+
+    let deposit_res = mer.deposit().await; 
+
+    MERCHNANT.with(|merchant| {
+        let mut merchant = merchant.borrow_mut();
+        merchant.update_balance(deposit_res.new_balance);
+    });
+
+    deposit_res.log
 }
 
 #[query]
